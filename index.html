@@ -14,7 +14,7 @@
 <body>
   <h1>Radiology Clinic Locator</h1>
   <!-- Display the static map image -->
-  <img id="map" src="" alt="Map" style="cursor: pointer;">
+  <img id="map" src="https://via.placeholder.com/600x300?text=Loading+Map..." alt="Map" style="cursor: pointer;">
   
   <!-- Hidden info panel to show clinic details -->
   <div id="clinic-info">
@@ -25,7 +25,8 @@
     <button onclick="closeInfo()">Close</button>
   </div>
   
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <!-- Include Supabase JS from CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
   <script>
     // Initialize Supabase client with your project details
     const supabaseUrl = 'https://tcodvpbzoczyfrtjqddu.supabase.co';
@@ -44,7 +45,7 @@
       if (data.length > 0) {
         const clinic = data[0];
   
-        // Build the Google Maps Static API URL using the clinic's coordinates
+        // Use your provided Google Maps Static API key
         const googleMapsApiKey = 'AIzaSyBSR5pRoUVRr1NmyJlJxK4XHNuHoIJT9PA';
         const mapUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${clinic.latitude},${clinic.longitude}&zoom=15&size=600x300&markers=color:red%7C${clinic.latitude},${clinic.longitude}&key=${googleMapsApiKey}`;
         document.getElementById("map").src = mapUrl;
@@ -53,11 +54,15 @@
         document.getElementById("map").addEventListener("click", () => {
           document.getElementById("clinic-name").textContent = clinic.name;
           document.getElementById("clinic-address").textContent = clinic.address;
-          document.getElementById("clinic-services").textContent = "Services: " + clinic.services.join(", ");
+          document.getElementById("clinic-services").textContent = "Services: " + (Array.isArray(clinic.services) ? clinic.services.join(", ") : clinic.services);
           document.getElementById("clinic-fee").textContent = "Bulk Bill: " + (clinic.bulk_bill ? "Yes" : "No");
           document.getElementById("clinic-info").style.display = "block";
         });
       }
+    }
+  
+    function closeInfo() {
+      document.getElementById("clinic-info").style.display = "none";
     }
   
     // Load the clinic data when the page loads
