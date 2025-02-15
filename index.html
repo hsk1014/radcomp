@@ -45,7 +45,7 @@
         const clinic = data[0];
   
         // Build the Google Maps Static API URL using the clinic's coordinates
-        const googleMapsApiKey = 'YOUR_GOOGLE_MAPS_API_KEY';
+        const googleMapsApiKey = 'AIzaSyBSR5pRoUVRr1NmyJlJxK4XHNuHoIJT9PA';
         const mapUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${clinic.latitude},${clinic.longitude}&zoom=15&size=600x300&markers=color:red%7C${clinic.latitude},${clinic.longitude}&key=${googleMapsApiKey}`;
         document.getElementById("map").src = mapUrl;
   
