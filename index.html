@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://tcodvpbzoczyfrtjqddu.supabase.co https://maps.googleapis.com; img-src 'self' https://maps.googleapis.com data:; script-src 'self' https://unpkg.com https://maps.googleapis.com 'unsafe-inline'; style-src 'self' 'unsafe-inline';">
+  <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval'; img-src * 'self' data: https: blob:; script-src * 'unsafe-inline' 'unsafe-eval'; style-src * 'unsafe-inline';">
   <title>Radiology Clinics</title>
   <style>
     body { font-family: Arial, sans-serif; text-align: center; }
@@ -57,28 +57,27 @@
             throw new Error('Invalid coordinates');
           }
 
-          // Create the map URL using a proxy or direct URL
           const googleMapsApiKey = 'AIzaSyBSR5pRoUVRr1NmyJlJxK4XHNuHoIJT9PA';
           const mapUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lng}&zoom=15&size=600x300&markers=color:red|${lat},${lng}&key=${googleMapsApiKey}`;
           
           const mapImg = document.getElementById("map");
           
-          // Create a new image object to test loading
-          const testImage = new Image();
-          testImage.onload = function() {
-            mapImg.src = mapUrl;
-            mapImg.alt = "Map showing clinic location";
-          };
-          
-          testImage.onerror = function() {
+          // Set the map image directly
+          mapImg.onerror = function(e) {
+            console.error('Map loading error:', e);
             mapImg.alt = "Error loading map";
             const errorDiv = document.createElement('div');
             errorDiv.style.color = 'red';
             errorDiv.textContent = 'Failed to load map. Please try again later.';
             mapImg.parentNode.insertBefore(errorDiv, mapImg.nextSibling);
           };
-          
-          testImage.src = mapUrl;
+
+          mapImg.onload = function() {
+            console.log('Map loaded successfully');
+          };
+
+          console.log('Loading map from URL:', mapUrl);
+          mapImg.src = mapUrl;
 
           // Set up the click event to show clinic details
           mapImg.addEventListener("click", () => {
