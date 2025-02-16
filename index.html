@@ -3,10 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://tcodvpbzoczyfrtjqddu.supabase.co https://maps.googleapis.com; img-src 'self' https://maps.googleapis.com data:; script-src 'self' https://unpkg.com https://maps.googleapis.com 'unsafe-inline'; style-src 'self' 'unsafe-inline';">
   <title>Radiology Clinics</title>
   <style>
     body { font-family: Arial, sans-serif; text-align: center; }
-    #map { margin: 20px auto; }
+    #map { margin: 20px auto; max-width: 100%; height: auto; }
     #clinic-info { display: none; border: 1px solid #ccc; padding: 10px; margin: 20px; }
     button { margin-top: 10px; }
   </style>
@@ -14,7 +15,7 @@
 <body>
   <h1>Radiology Clinic Locator</h1>
   <!-- Display the static map image -->
-  <img id="map" src="" alt="Map" style="cursor: pointer;">
+  <img id="map" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Map" style="cursor: pointer;">
   
   <!-- Hidden info panel to show clinic details -->
   <div id="clinic-info">
@@ -31,52 +32,53 @@
     const supabaseUrl = 'https://tcodvpbzoczyfrtjqddu.supabase.co';
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRjb2R2cGJ6b2N6eWZydGpxZGR1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzgyMjk2NzgsImV4cCI6MjA1MzgwNTY3OH0.4L2reZet-Jh7FH-r6zLbKmmusZum1VUtTv_K2IsmZ2o';
     
-    console.log('Initializing Supabase client...');
     const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
-    console.log('Supabase client initialized');
 
     async function loadClinicData() {
       try {
-        console.log('Fetching clinic data...');
         const { data, error } = await supabaseClient
           .from('clinics')
           .select('*')
           .limit(1);
-
-        console.log('Raw response:', { data, error });
 
         if (error) {
           console.error('Error fetching clinic data:', error);
           return;
         }
 
-        console.log('Received clinic data:', data);
-
         if (data && data.length > 0) {
           const clinic = data[0];
-          console.log('Clinic coordinates:', clinic.latitude, clinic.longitude);
-
-          const googleMapsApiKey = 'AIzaSyBSR5pRoUVRr1NmyJlJxK4XHNuHoIJT9PA';
-          const mapUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${clinic.latitude},${clinic.longitude}&zoom=15&size=600x300&markers=color:red%7C${clinic.latitude},${clinic.longitude}&key=${googleMapsApiKey}`;
           
-          console.log('Full map URL:', mapUrl);
+          // Validate coordinates
+          const lat = parseFloat(clinic.latitude);
+          const lng = parseFloat(clinic.longitude);
+          
+          if (isNaN(lat) || isNaN(lng)) {
+            throw new Error('Invalid coordinates');
+          }
+
+          // Create the map URL using a proxy or direct URL
+          const googleMapsApiKey = 'AIzaSyBSR5pRoUVRr1NmyJlJxK4XHNuHoIJT9PA';
+          const mapUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lng}&zoom=15&size=600x300&markers=color:red|${lat},${lng}&key=${googleMapsApiKey}`;
           
           const mapImg = document.getElementById("map");
-          mapImg.src = mapUrl;
           
-          mapImg.onerror = function() {
-            console.error('Error loading map image');
-            console.log('Failed map URL:', mapImg.src);
-            mapImg.alt = 'Error loading map';
+          // Create a new image object to test loading
+          const testImage = new Image();
+          testImage.onload = function() {
+            mapImg.src = mapUrl;
+            mapImg.alt = "Map showing clinic location";
+          };
+          
+          testImage.onerror = function() {
+            mapImg.alt = "Error loading map";
             const errorDiv = document.createElement('div');
             errorDiv.style.color = 'red';
             errorDiv.textContent = 'Failed to load map. Please try again later.';
             mapImg.parentNode.insertBefore(errorDiv, mapImg.nextSibling);
           };
-
-          mapImg.onload = function() {
-            console.log('Map image loaded successfully');
-          };
+          
+          testImage.src = mapUrl;
 
           // Set up the click event to show clinic details
           mapImg.addEventListener("click", () => {
@@ -87,18 +89,23 @@
             document.getElementById("clinic-info").style.display = "block";
           });
         } else {
-          console.error('No clinic data found');
+          throw new Error('No clinic data found');
         }
       } catch (err) {
-        console.error('Error in loadClinicData:', err);
+        console.error('Error:', err.message);
+        const mapImg = document.getElementById("map");
+        mapImg.alt = "Error: " + err.message;
+        const errorDiv = document.createElement('div');
+        errorDiv.style.color = 'red';
+        errorDiv.textContent = 'Error: ' + err.message;
+        mapImg.parentNode.insertBefore(errorDiv, mapImg.nextSibling);
       }
     }
-  
-    // Add the missing closeInfo function
+
     function closeInfo() {
       document.getElementById("clinic-info").style.display = "none";
     }
-  
+
     // Load the clinic data when the page loads
     loadClinicData();
   </script>
