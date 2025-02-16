@@ -25,42 +25,59 @@
     <button onclick="closeInfo()">Close</button>
   </div>
   
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <script>
     // Initialize Supabase client with your project details
     const supabaseUrl = 'https://tcodvpbzoczyfrtjqddu.supabase.co';
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRjb2R2cGJ6b2N6eWZydGpxZGR1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzgyMjk2NzgsImV4cCI6MjA1MzgwNTY3OH0.4L2reZet-Jh7FH-r6zLbKmmusZum1VUtTv_K2IsmZ2o';
-    const { createClient } = supabase;
-    const supabaseClient = createClient(supabaseUrl, supabaseKey);
-  
+    
+    console.log('Initializing Supabase client...');
+    const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+    console.log('Supabase client initialized');
+
     async function loadClinicData() {
       try {
+        console.log('Fetching clinic data...');
         const { data, error } = await supabaseClient
           .from('clinics')
           .select('*')
-          .limit(1); // For now, we expect only one clinic
-  
+          .limit(1);
+
+        console.log('Raw response:', { data, error });
+
         if (error) {
           console.error('Error fetching clinic data:', error);
           return;
         }
-  
+
+        console.log('Received clinic data:', data);
+
         if (data && data.length > 0) {
           const clinic = data[0];
-  
-          // Build the Google Maps Static API URL using the clinic's coordinates
+          console.log('Clinic coordinates:', clinic.latitude, clinic.longitude);
+
           const googleMapsApiKey = 'AIzaSyBSR5pRoUVRr1NmyJlJxK4XHNuHoIJT9PA';
           const mapUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${clinic.latitude},${clinic.longitude}&zoom=15&size=600x300&markers=color:red%7C${clinic.latitude},${clinic.longitude}&key=${googleMapsApiKey}`;
+          
+          console.log('Full map URL:', mapUrl);
           
           const mapImg = document.getElementById("map");
           mapImg.src = mapUrl;
           
-          // Add error handling for map image
           mapImg.onerror = function() {
             console.error('Error loading map image');
+            console.log('Failed map URL:', mapImg.src);
             mapImg.alt = 'Error loading map';
+            const errorDiv = document.createElement('div');
+            errorDiv.style.color = 'red';
+            errorDiv.textContent = 'Failed to load map. Please try again later.';
+            mapImg.parentNode.insertBefore(errorDiv, mapImg.nextSibling);
           };
-  
+
+          mapImg.onload = function() {
+            console.log('Map image loaded successfully');
+          };
+
           // Set up the click event to show clinic details
           mapImg.addEventListener("click", () => {
             document.getElementById("clinic-name").textContent = clinic.name;
