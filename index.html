@@ -14,7 +14,7 @@
 <body>
   <h1>Radiology Clinic Locator</h1>
   <!-- Display the static map image -->
-  <img id="map" src="https://via.placeholder.com/600x300?text=Loading+Map..." alt="Map" style="cursor: pointer;">
+  <img id="map" src="" alt="Map" style="cursor: pointer;">
   
   <!-- Hidden info panel to show clinic details -->
   <div id="clinic-info">
@@ -25,42 +25,59 @@
     <button onclick="closeInfo()">Close</button>
   </div>
   
-  <!-- Include Supabase JS from CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <script>
     // Initialize Supabase client with your project details
     const supabaseUrl = 'https://tcodvpbzoczyfrtjqddu.supabase.co';
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRjb2R2cGJ6b2N6eWZydGpxZGR1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzgyMjk2NzgsImV4cCI6MjA1MzgwNTY3OH0.4L2reZet-Jh7FH-r6zLbKmmusZum1VUtTv_K2IsmZ2o';
-    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+    const { createClient } = supabase;
+    const supabaseClient = createClient(supabaseUrl, supabaseKey);
   
     async function loadClinicData() {
-      const { data, error } = await supabase
-        .from('clinics')
-        .select('*')
-        .limit(1); // For now, we expect only one clinic
-      if (error) {
-        console.error('Error fetching clinic data:', error);
-        return;
-      }
-      if (data.length > 0) {
-        const clinic = data[0];
+      try {
+        const { data, error } = await supabaseClient
+          .from('clinics')
+          .select('*')
+          .limit(1); // For now, we expect only one clinic
   
-        // Use your provided Google Maps Static API key
-        const googleMapsApiKey = 'AIzaSyBSR5pRoUVRr1NmyJlJxK4XHNuHoIJT9PA';
-        const mapUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${clinic.latitude},${clinic.longitude}&zoom=15&size=600x300&markers=color:red%7C${clinic.latitude},${clinic.longitude}&key=${googleMapsApiKey}`;
-        document.getElementById("map").src = mapUrl;
+        if (error) {
+          console.error('Error fetching clinic data:', error);
+          return;
+        }
   
-        // Set up the click event to show clinic details
-        document.getElementById("map").addEventListener("click", () => {
-          document.getElementById("clinic-name").textContent = clinic.name;
-          document.getElementById("clinic-address").textContent = clinic.address;
-          document.getElementById("clinic-services").textContent = "Services: " + (Array.isArray(clinic.services) ? clinic.services.join(", ") : clinic.services);
-          document.getElementById("clinic-fee").textContent = "Bulk Bill: " + (clinic.bulk_bill ? "Yes" : "No");
-          document.getElementById("clinic-info").style.display = "block";
-        });
+        if (data && data.length > 0) {
+          const clinic = data[0];
+  
+          // Build the Google Maps Static API URL using the clinic's coordinates
+          const googleMapsApiKey = 'AIzaSyBSR5pRoUVRr1NmyJlJxK4XHNuHoIJT9PA';
+          const mapUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${clinic.latitude},${clinic.longitude}&zoom=15&size=600x300&markers=color:red%7C${clinic.latitude},${clinic.longitude}&key=${googleMapsApiKey}`;
+          
+          const mapImg = document.getElementById("map");
+          mapImg.src = mapUrl;
+          
+          // Add error handling for map image
+          mapImg.onerror = function() {
+            console.error('Error loading map image');
+            mapImg.alt = 'Error loading map';
+          };
+  
+          // Set up the click event to show clinic details
+          mapImg.addEventListener("click", () => {
+            document.getElementById("clinic-name").textContent = clinic.name;
+            document.getElementById("clinic-address").textContent = clinic.address;
+            document.getElementById("clinic-services").textContent = "Services: " + (clinic.services ? clinic.services.join(", ") : "Not specified");
+            document.getElementById("clinic-fee").textContent = "Bulk Bill: " + (clinic.bulk_bill ? "Yes" : "No");
+            document.getElementById("clinic-info").style.display = "block";
+          });
+        } else {
+          console.error('No clinic data found');
+        }
+      } catch (err) {
+        console.error('Error in loadClinicData:', err);
       }
     }
   
+    // Add the missing closeInfo function
     function closeInfo() {
       document.getElementById("clinic-info").style.display = "none";
     }
